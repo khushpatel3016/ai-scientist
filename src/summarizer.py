@@ -1,11 +1,9 @@
-from transformers import pipeline
+from nltk.tokenize import sent_tokenize
 
-summarizer = pipeline("summarization")
-
-def summarize_text(text):
-    # limit input size
-    text = text[:2000]
-
-    summary = summarizer(text, max_length=150, min_length=50, do_sample=False)
-
-    return summary[0]['summary_text']
+def summarize_text(text, num_sentences=5):
+    sentences = sent_tokenize(text)
+    
+    # filter small/noisy sentences
+    sentences = [s for s in sentences if len(s) > 40]
+    
+    return " ".join(sentences[:num_sentences])
