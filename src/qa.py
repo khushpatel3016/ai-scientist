@@ -1,6 +1,7 @@
+import os
 from openai import OpenAI
-    
-client = OpenAI()
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_answer(context, question):
     prompt = f"""
