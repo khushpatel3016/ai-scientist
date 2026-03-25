@@ -8,3 +8,7 @@ def extract_text_from_pdf(pdf_path):
         text += page.get_text()
 
     return text
+
+def split_text(text, chunk_size=500):
+    return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+
