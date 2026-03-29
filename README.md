@@ -1,199 +1,159 @@
-# 🧬 AI Scientist: Research Paper Intelligence System
+# 🧬 AI Scientist — Autonomous Research Assistant
 
-An advanced AI system that reads research papers, understands them, and answers questions using modern Retrieval-Augmented Generation (RAG) techniques.
+An AI-powered system that reads research papers, understands them semantically, 
+answers questions about them, and will evolve into a fully autonomous research agent 
+capable of finding gaps, generating hypotheses, and proposing experiments.
 
----
-
-## 🚀 Project Overview
-
-This project aims to simulate the early stages of an **AI Scientist** by enabling machines to:
-
-* 📄 Read and process research papers (PDFs)
-* 🧠 Understand content using embeddings
-* 🔍 Retrieve relevant knowledge
-* 💬 Answer complex questions intelligently
+> Built from scratch as a portfolio project — no tutorials, no copy-paste.
 
 ---
 
-## 🧩 Completed Phases
-
-### 🥇 Phase 1: PDF Reader & Summarizer
-
-**Objective:** Convert research papers into readable summaries
-
-**What I built:**
-
-* Extracted text from PDFs using PyMuPDF
-* Implemented sentence-based summarization using NLTK
-* Built a clean pipeline: `PDF → Text → Summary`
-
-**Tech Used:**
-
-* Python
-* PyMuPDF (`fitz`)
-* NLTK
+## 🚀 Live Demo
+*Web interface coming soon (Phase 5)*
 
 ---
 
-### 🥈 Phase 2: RAG-Based Question Answering System
+## 🧠 What It Does
 
-**Objective:** Enable AI to answer questions from research papers
+| Feature | Status |
+|---|---|
+| PDF ingestion & text extraction | ✅ Done |
+| Semantic search with embeddings | ✅ Done |
+| AI-powered Q&A on research papers | ✅ Done |
+| Research gap finder | 🔨 In Progress |
+| Hypothesis generator | 🔨 In Progress |
+| Web interface | 📅 Planned |
 
-**What I built:**
+---
 
-* Split document into meaningful chunks
-* Generated embeddings using sentence-transformers
-* Stored embeddings in FAISS vector database
-* Implemented similarity search to retrieve relevant context
-* Integrated OpenAI API to generate intelligent answers
-
-**Pipeline:**
-
+## 🏗️ System Architecture
 ```
-PDF → Text → Chunks → Embeddings → Vector DB → Query → Context → AI Answer
-```
-
-**Tech Used:**
-
-* sentence-transformers (MiniLM model)
-* FAISS (vector search)
-* OpenAI API (LLM)
-* NumPy
-
----
-
-## ⚙️ System Architecture
-
-```
-                ┌──────────────┐
-                │   PDF File   │
-                └──────┬───────┘
-                       ↓
-                ┌──────────────┐
-                │ Text Extract │
-                └──────┬───────┘
-                       ↓
-                ┌──────────────┐
-                │ Text Chunks  │
-                └──────┬───────┘
-                       ↓
-                ┌──────────────┐
-                │ Embeddings   │
-                └──────┬───────┘
-                       ↓
-                ┌──────────────┐
-                │ FAISS Index  │
-                └──────┬───────┘
-                       ↓
-                ┌──────────────┐
-                │ Query Input  │
-                └──────┬───────┘
-                       ↓
-                ┌──────────────┐
-                │ Context Fetch│
-                └──────┬───────┘
-                       ↓
-                ┌──────────────┐
-                │ OpenAI Model │
-                └──────┬───────┘
-                       ↓
-                ┌──────────────┐
-                │ Final Answer │
-                └──────────────┘
+PDF Input
+   ↓
+Text Extraction (PyMuPDF)
+   ↓
+Chunking + Embedding (SentenceTransformers)
+   ↓
+Vector Search (FAISS)
+   ↓
+Context Retrieval
+   ↓
+LLM Answer Generation (Groq - LLaMA 3.3)
+   ↓
+Research Insight Output
 ```
 
 ---
 
-## 💻 How to Run
+## ⚙️ Tech Stack
 
-### 1. Clone Repository
+- **Language:** Python 3.13
+- **PDF Processing:** PyMuPDF (fitz)
+- **Embeddings:** SentenceTransformers (`all-MiniLM-L6-v2`)
+- **Vector Database:** FAISS
+- **LLM:** LLaMA 3.3 70B via Groq API
+- **Web UI (coming):** Streamlit
 
+---
+
+## 📁 Project Structure
+```
+ai-scientist/
+├── data/
+│   └── sample.pdf          # Input research paper
+├── src/
+│   ├── reader.py           # PDF text extraction + chunking
+│   ├── embedder.py         # Semantic embeddings
+│   ├── retriever.py        # FAISS vector search
+│   ├── qa.py               # LLM answer generation
+│   └── main.py             # Main pipeline
+├── .gitignore
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## 🛠️ Setup & Installation
+
+### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/ai-scientist.git
+git clone https://github.com/khushpatel3016/ai-scientist.git
 cd ai-scientist
 ```
 
-### 2. Create Virtual Environment
-
+### 2. Create virtual environment
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
+.venv\Scripts\activate   # Windows
+source .venv/bin/activate  # Mac/Linux
 ```
 
-### 3. Install Dependencies
-
+### 3. Install dependencies
 ```bash
-pip install pymupdf nltk sentence-transformers faiss-cpu openai
+pip install -r requirements.txt
 ```
 
-### 4. Set OpenAI API Key
-
+### 4. Set your API key
 ```bash
-setx OPENAI_API_KEY "your-api-key"
+# Windows PowerShell
+$env:GROQ_API_KEY="your-groq-api-key"
+
+# Mac/Linux
+export GROQ_API_KEY="your-groq-api-key"
 ```
+Get a free Groq API key at: https://console.groq.com
 
-### 5. Run the Project
+### 5. Add a research paper
+Place any PDF inside the `data/` folder and rename it `sample.pdf`
 
+### 6. Run
 ```bash
 python src/main.py
 ```
 
 ---
 
-## 🧪 Example Usage
-
+## 💬 Example Output
 ```
-Ask a question:
-→ What problem does this paper solve?
+📄 Reading PDF...
+   Split into 47 chunks
 
-Answer:
-→ The paper proposes...
+🧠 Creating embeddings...
+
+🔍 Building search index...
+
+✅ System ready! Ask anything about the paper.
+
+❓ Your question: What problem does this paper solve?
+
+💬 Answer:
+The paper addresses the challenge of...
 ```
 
 ---
 
-## 📈 Key Learnings
+## 🗺️ Roadmap
 
-* Handling real-world dependency issues (Python compatibility, transformers, etc.)
-* Understanding embedding-based retrieval systems
-* Building a full RAG pipeline from scratch
-* Managing GitHub project structure professionally
-* Integrating APIs securely using environment variables
-
----
-
-## 🔥 Future Scope (Upcoming Phases)
-
-### 🥉 Phase 3: AI Research Idea Generator
-
-* Generate novel research ideas from papers
-
-### 🧪 Phase 4: Experiment Generator
-
-* Convert ideas into runnable ML experiments
-
-### 📝 Phase 5: AI Paper Writer
-
-* Automatically generate full research papers
-
----
-
-## 🎯 Why This Project Stands Out
-
-* Goes beyond basic ML projects
-* Implements real-world AI architecture (RAG)
-* Demonstrates system design + AI integration
-* Shows strong problem-solving and debugging skills
+- [x] Phase 1 — PDF reader + summarizer
+- [x] Phase 2 — RAG system (semantic search + Q&A)
+- [ ] Phase 3 — Research gap finder
+- [ ] Phase 4 — Hypothesis + idea generator
+- [ ] Phase 5 — Web interface (Streamlit)
 
 ---
 
 ## 👨‍💻 Author
 
-**Khush Patel**
-CSE Core Student | AI & Systems Enthusiast
+**Khush Patel**  
+CSE Student | AI/ML Enthusiast  
+[GitHub](https://github.com/khushpatel3016)
 
 ---
 
-## ⭐ If you like this project
+## ⭐ Star this repo if you find it useful!
 
-Give it a star ⭐ and follow for upcoming phases!
+After pasting, run these in terminal to push it:
+powershellgit add README.md
+git commit -m "Added detailed README with architecture and roadmap"
+git push
