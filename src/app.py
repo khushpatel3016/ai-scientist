@@ -11,6 +11,7 @@ from retriever import create_index, search
 from qa import generate_answer
 from gap_finder import summarize_paper, find_gaps
 from hypotheses import generate_hypotheses, rank_ideas
+from paper_writer import write_full_paper, format_paper
 
 # ── Page config ───────────────────────────────────────────────
 st.set_page_config(
@@ -477,6 +478,12 @@ with st.sidebar:
         unsafe_allow_html=True
     )
 
+    page = st.radio(
+    "nav",
+    ["Home", "Paper Q&A", "Gap Finder", "Hypothesis Lab", "Paper Writer"],
+    label_visibility="collapsed"
+)
+
 
 # ══════════════════════════════════════════════════════════════
 # HOME
@@ -769,6 +776,9 @@ elif page == "Hypothesis Lab":
 
             with st.spinner("Scoring and ranking..."):
                 rankings = rank_ideas(hypotheses)
+            
+            st.session_state["hypotheses"] = hypotheses
+            st.session_state["rankings"] = rankings
 
             st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -807,3 +817,122 @@ elif page == "Hypothesis Lab":
                 file_name="hypothesis_report.txt",
                 mime="text/plain"
             )
+
+# ══════════════════════════════════════════════════════════════
+# PAPER WRITER
+# ══════════════════════════════════════════════════════════════
+elif page == "Paper Writer":
+
+    st.markdown("""
+    <div class='section-header'>
+        <div class='section-label'>Phase 5</div>
+        <div class='section-title'>AI Paper Writer</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown(
+        "<p style='color:#3f3f5a;font-size:0.85rem;margin-bottom:1.5rem;font-weight:300;'>"
+        "Give it a research idea, a gap, and a hypothesis — it writes a complete "
+        "academic paper with title, abstract, introduction, methodology, results, and conclusion."
+        "</p>",
+        unsafe_allow_html=True
+    )
+
+    tab1, tab2 = st.tabs(["Manual Input", "Load from Phase 4"])
+
+    with tab1:
+        idea = st.text_area(
+            "Research idea",
+            height=100,
+            placeholder="Describe your research idea clearly...",
+            label_visibility="collapsed"
+        )
+        gap = st.text_area(
+            "Research gap",
+            height=100,
+            placeholder="What problem or gap does this address?",
+            label_visibility="collapsed"
+        )
+        hypothesis = st.text_area(
+            "Main hypothesis",
+            height=80,
+            placeholder="Your main testable hypothesis...",
+            label_visibility="collapsed"
+        )
+        rankings = st.text_area(
+            "Rankings or scores (optional)",
+            height=60,
+            placeholder="Paste idea rankings from Hypothesis Lab if available...",
+            label_visibility="collapsed"
+        )
+
+        if st.button("Write Research Paper", key="manual_write"):
+            if not idea or not gap or not hypothesis:
+                st.error("Fill in at least the idea, gap, and hypothesis.")
+            elif not os.getenv("GROQ_API_KEY"):
+                st.error("Add your Groq API key in the sidebar.")
+            else:
+                with st.spinner("Writing your paper — this takes about 30 seconds..."):
+                    paper = write_full_paper(idea, gap, hypothesis, rankings)
+                    formatted = format_paper(paper)
+
+                st.success("Paper generated")
+                st.markdown(
+                    f"<div class='report-wrap'>{formatted}</div>",
+                    unsafe_allow_html=True
+                )
+                st.download_button(
+                    "Download Paper",
+                    data=formatted,
+                    file_name="research_paper.txt",
+                    mime="text/plain"
+                )
+
+    with tab2:
+        st.markdown(
+            "<p style='color:#3f3f5a;font-size:0.82rem;font-weight:300;'>"
+            "Run the Gap Finder and Hypothesis Lab first, then come here. "
+            "If you used the CLI (phase4.py), the report is in your data/ folder."
+            "</p>",
+            unsafe_allow_html=True
+        )
+
+        gap_val = st.session_state.get("gap_report", "")
+        hyp_val = st.session_state.get("hypotheses", "")
+        rank_val = st.session_state.get("rankings", "")
+
+        if gap_val or hyp_val:
+            st.success("Phase 4 data detected from this session")
+            auto_idea = hyp_val[:500] if hyp_val else ""
+            auto_gap = gap_val[:1000] if gap_val else ""
+            auto_hyp = hyp_val[:500] if hyp_val else ""
+            auto_rank = rank_val[:500] if rank_val else ""
+
+            st.markdown(
+                f"<p style='font-size:0.78rem;color:#6b6b8a;'>"
+                f"Gap: {len(auto_gap)} chars · Hypothesis: {len(auto_hyp)} chars"
+                f"</p>",
+                unsafe_allow_html=True
+            )
+
+            if st.button("Write Paper from Phase 4 Data", key="auto_write"):
+                if not os.getenv("GROQ_API_KEY"):
+                    st.error("Add your Groq API key in the sidebar.")
+                else:
+                    with st.spinner("Writing your paper — this takes about 30 seconds..."):
+                        paper = write_full_paper(auto_idea, auto_gap, auto_hyp, auto_rank)
+                        formatted = format_paper(paper)
+
+                    st.success("Paper generated")
+                    st.markdown(
+                        f"<div class='report-wrap'>{formatted}</div>",
+                        unsafe_allow_html=True
+                    )
+                    st.download_button(
+                        "Download Paper",
+                        data=formatted,
+                        file_name="research_paper.txt",
+                        mime="text/plain"
+                    )
+        else:
+            st.info("No Phase 4 data in this session yet. Use the Gap Finder and Hypothesis Lab first, or use Manual Input.")

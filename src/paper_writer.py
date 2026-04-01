@@ -1,0 +1,192 @@
+import os
+from groq import Groq
+
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+def generate_section(prompt: str, max_tokens: int = 800) -> str:
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=max_tokens
+    )
+    return response.choices[0].message.content.strip()
+
+
+def generate_title(idea: str, gap: str) -> str:
+    return generate_section(f"""You are an academic researcher writing a paper title.
+
+Research idea: {idea}
+Research gap being addressed: {gap}
+
+Write ONE concise, specific, academic paper title.
+No quotes. No explanation. Just the title itself.""", max_tokens=80)
+
+
+def generate_abstract(title: str, idea: str, gap: str, hypothesis: str) -> str:
+    return generate_section(f"""Write an academic abstract for a research paper.
+
+Title: {title}
+Core idea: {idea}
+Gap being addressed: {gap}
+Main hypothesis: {hypothesis}
+
+Write a single paragraph abstract (150-200 words) covering:
+- The problem
+- Why it matters
+- The proposed approach
+- Key expected results
+- Main contribution
+
+Academic tone. No bullet points.""", max_tokens=350)
+
+
+def generate_introduction(title: str, idea: str, gap: str) -> str:
+    return generate_section(f"""Write the Introduction section of a research paper.
+
+Title: {title}
+Core idea: {idea}
+Research gap: {gap}
+
+Write 3-4 paragraphs covering:
+1. Background and motivation
+2. The problem and why current approaches fall short
+3. What this paper proposes
+4. Overview of paper structure
+
+Academic tone. No headings inside the section. No bullet points.""", max_tokens=600)
+
+
+def generate_related_work(idea: str, gap: str) -> str:
+    return generate_section(f"""Write the Related Work section of a research paper.
+
+Core idea: {idea}
+Gap in existing literature: {gap}
+
+Write 3 paragraphs discussing:
+1. Existing approaches to this problem
+2. Their limitations
+3. How this work differs
+
+Academic tone. Reference fictional but realistic paper names where appropriate.
+No bullet points.""", max_tokens=500)
+
+
+def generate_methodology(idea: str, hypothesis: str) -> str:
+    return generate_section(f"""Write the Methodology section of a research paper.
+
+Core idea: {idea}
+Hypothesis being tested: {hypothesis}
+
+Write a detailed methodology covering:
+1. Overall approach and framework
+2. Data or input requirements
+3. System design or experimental setup
+4. Evaluation metrics
+
+Academic tone. Be specific and technical. No bullet points.""", max_tokens=600)
+
+
+def generate_results(hypothesis: str, rankings: str) -> str:
+    return generate_section(f"""Write the Results section of a research paper.
+
+Hypothesis tested: {hypothesis}
+Idea rankings and scores: {rankings}
+
+Write a results section that:
+1. Presents expected findings clearly
+2. Compares against baseline approaches
+3. Discusses what the scores/rankings indicate
+4. Notes any limitations observed
+
+Use realistic but clearly hypothetical numbers.
+Academic tone. No bullet points.""", max_tokens=500)
+
+
+def generate_conclusion(title: str, idea: str, hypothesis: str) -> str:
+    return generate_section(f"""Write the Conclusion section of a research paper.
+
+Title: {title}
+Core idea: {idea}
+Main hypothesis: {hypothesis}
+
+Write 2-3 paragraphs covering:
+1. Summary of what was proposed and found
+2. Significance and contributions
+3. Future work directions
+
+Academic tone. No bullet points.""", max_tokens=400)
+
+
+def write_full_paper(
+    idea: str,
+    gap: str,
+    hypothesis: str,
+    rankings: str
+) -> dict:
+    print("  Generating title...")
+    title = generate_title(idea, gap)
+
+    print("  Generating abstract...")
+    abstract = generate_abstract(title, idea, gap, hypothesis)
+
+    print("  Generating introduction...")
+    introduction = generate_introduction(title, idea, gap)
+
+    print("  Generating related work...")
+    related_work = generate_related_work(idea, gap)
+
+    print("  Generating methodology...")
+    methodology = generate_methodology(idea, hypothesis)
+
+    print("  Generating results...")
+    results = generate_results(hypothesis, rankings)
+
+    print("  Generating conclusion...")
+    conclusion = generate_conclusion(title, idea, hypothesis)
+
+    return {
+        "title": title,
+        "abstract": abstract,
+        "introduction": introduction,
+        "related_work": related_work,
+        "methodology": methodology,
+        "results": results,
+        "conclusion": conclusion
+    }
+
+
+def format_paper(paper: dict) -> str:
+    divider = "=" * 70
+    return f"""
+{divider}
+{paper['title'].upper()}
+{divider}
+
+ABSTRACT
+{'-' * 70}
+{paper['abstract']}
+
+1. INTRODUCTION
+{'-' * 70}
+{paper['introduction']}
+
+2. RELATED WORK
+{'-' * 70}
+{paper['related_work']}
+
+3. METHODOLOGY
+{'-' * 70}
+{paper['methodology']}
+
+4. RESULTS
+{'-' * 70}
+{paper['results']}
+
+5. CONCLUSION
+{'-' * 70}
+{paper['conclusion']}
+
+{divider}
+Generated by AI Scientist — github.com/khushpatel3016/ai-scientist
+{divider}
+""".strip()
