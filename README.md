@@ -1,85 +1,69 @@
 # 🧬 AI Scientist
 
-A locally-running AI system that reads research papers, answers questions about them,
-and analyzes multiple papers together to surface research gaps and suggest new directions
-— built from scratch, no shortcuts.
+A locally-running AI research assistant that reads papers, answers questions,
+finds research gaps, and generates ranked hypotheses — now with a full web interface.
+
+Built from scratch. No tutorials. No shortcuts.
 
 ---
 
 ## What this actually is
 
-Most AI projects you see online wrap an API and call it a day.
+Most AI projects wrap an API and call it a day.
 This one builds the full pipeline manually:
 
-- Extract raw text from a PDF
-- Split it into chunks and convert each chunk into a vector embedding
-- Store those embeddings in a FAISS index for fast similarity search
-- When you ask a question, embed it the same way and find the most relevant chunks
-- Pass those chunks as context to an LLM and get a grounded answer
-- Feed multiple papers together and let the system find what nobody has solved yet
+- Extract raw text from a PDF using PyMuPDF
+- Split into chunks and embed each one using SentenceTransformers
+- Store embeddings in a FAISS index for fast similarity search
+- Embed your question the same way and retrieve the most relevant chunks
+- Pass those chunks as context to LLaMA 3.3 70B and get a grounded answer
+- Feed multiple papers together to find what nobody has solved yet
+- Turn those gaps into ranked, testable hypotheses
 
-No hallucination from thin air. The model only answers from what the papers actually say.
-
----
-
-## Current State
-
-Phase 3 is complete. The system can:
-
-- Ingest any research paper as a PDF
-- Understand it semantically, not just keyword-match
-- Answer research-level questions about it in natural language
-- Read multiple papers on the same topic and produce a research gap report
+No hallucination from thin air. The model only answers from what the papers say.
 
 ---
 
-## How It Was Built
+## What's been built
 
-### Phase 1 — Reading and Processing
-Started with extracting raw text from PDFs using PyMuPDF.
-The text gets cleaned and split into chunks so context
-isn't lost at boundaries.
+### Phase 1 — PDF Reading and Processing
+Raw text extraction from PDFs using PyMuPDF.
+Text is cleaned and split into chunks so context isn't lost at boundaries.
 
-### Phase 2 — Making It Searchable and Answerable
-Each chunk gets converted into a 384-dimension vector using
-SentenceTransformers (all-MiniLM-L6-v2). These vectors go into a
-FAISS index. When a question comes in, it gets embedded the same way,
-and similarity search finds the top matching chunks.
-Those chunks become the context window for LLaMA 3.3 70B running
-through Groq's inference API, which generates the final answer.
+### Phase 2 — Semantic Q&A
+Each chunk is converted into a 384-dimension vector using SentenceTransformers
+(all-MiniLM-L6-v2). Vectors go into a FAISS index. When a question comes in,
+it gets embedded the same way and cosine similarity finds the top matching chunks.
+Those chunks become the context window for LLaMA 3.3 70B on Groq.
 
 ### Phase 3 — Research Gap Finder
-The system now accepts multiple PDFs on the same topic.
-It summarizes each paper independently, then passes all summaries
-together to the LLM with a structured prompt that asks it to find:
-unsolved problems, contradictions between papers, missing experiments,
-and concrete suggestions for new research directions.
-The full report is saved as a text file automatically.
+Accepts multiple PDFs on the same topic. Summarizes each paper independently,
+then passes all summaries together to the LLM with a structured prompt that finds
+unsolved problems, contradictions between papers, missing experiments, and
+concrete directions for new research. Full report saved automatically.
+
+### Phase 4 — Hypothesis Lab
+Takes the gap report and generates 5 specific, testable hypotheses with reasoning,
+proposed experiments, and expected outcomes. Each hypothesis is then scored and
+ranked by novelty, feasibility, and impact.
+
+### Phase 5 — Web Interface
+Full Streamlit web app wrapping all four phases. Upload PDFs from the browser,
+ask questions, run gap analysis, generate hypotheses, and download reports —
+no terminal needed.
 
 ---
 
 ## System Flow
-
-### Single Paper Q&A (Phase 2)
 ```
-PDF
+PDF Input
  └─► Text Extraction (PyMuPDF)
       └─► Chunking
-           └─► Embedding (SentenceTransformers)
-                └─► FAISS Index
-                     └─► Similarity Search on Query
-                          └─► Context + Question → LLaMA 3.3 70B
-                               └─► Answer
-```
-
-### Multi-Paper Gap Analysis (Phase 3)
-```
-Multiple PDFs
- └─► Extract + Chunk each paper
-      └─► Summarize each paper via LLM
-           └─► Combine all summaries
-                └─► Gap analysis prompt → LLaMA 3.3 70B
-                     └─► Gap Report (printed + saved to file)
+           └─► Embedding (SentenceTransformers all-MiniLM-L6-v2)
+                └─► FAISS Vector Index
+                     └─► Similarity Search on query
+                          └─► Context → LLaMA 3.3 70B (Groq)
+                               └─► Answer / Gap Report / Hypotheses
 ```
 
 ---
@@ -92,6 +76,7 @@ Multiple PDFs
 | Embeddings | SentenceTransformers — all-MiniLM-L6-v2 |
 | Vector search | FAISS |
 | Language model | LLaMA 3.3 70B via Groq |
+| Web interface | Streamlit |
 | Runtime | Python 3.13 |
 
 ---
@@ -100,20 +85,22 @@ Multiple PDFs
 ```
 ai-scientist/
 ├── data/
-│   ├── sample.pdf           # Single paper for Q&A
-│   ├── gap_report.txt       # Auto-generated gap analysis report
-│   └── papers/              # Multiple papers for gap analysis
+│   ├── sample.pdf
+│   ├── gap_report.txt
+│   └── papers/
 │       ├── paper1.pdf
-│       ├── paper2.pdf
-│       └── paper3.pdf
+│       └── paper2.pdf
 ├── src/
-│   ├── reader.py            # PDF extraction and chunking
-│   ├── embedder.py          # Vector embedding
-│   ├── retriever.py         # FAISS index and search
-│   ├── qa.py                # LLM answer generation
-│   ├── main.py              # Phase 2 entry point — single paper Q&A
-│   ├── gap_finder.py        # Summarization and gap analysis logic
-│   └── phase3.py            # Phase 3 entry point — multi-paper analysis
+│   ├── reader.py          # PDF extraction and chunking
+│   ├── embedder.py        # Vector embedding
+│   ├── retriever.py       # FAISS index and search
+│   ├── qa.py              # LLM answer generation
+│   ├── gap_finder.py      # Summarization and gap analysis
+│   ├── hypothesis.py      # Hypothesis generation and ranking
+│   ├── main.py            # Phase 2 CLI entry point
+│   ├── phase3.py          # Phase 3 CLI entry point
+│   ├── phase4.py          # Phase 4 CLI entry point
+│   └── app.py             # Phase 5 — web interface
 ├── requirements.txt
 └── .gitignore
 ```
@@ -143,61 +130,33 @@ export GROQ_API_KEY="your-key"
 
 ---
 
-## Usage
-
-### Single Paper Q&A
-Drop a PDF into `data/` as `sample.pdf`, then:
+## Running the web interface
 ```bash
+streamlit run src/app.py
+```
+
+Opens at http://localhost:8501
+
+---
+
+## CLI usage (no browser)
+```bash
+# Single paper Q&A
 python src/main.py
-```
-```
-📄 Reading PDF...
-🧠 Creating embeddings...
-🔍 Building search index...
-✅ Ready.
 
-❓ What problem does this paper solve?
-💬 The paper addresses the challenge of...
-```
-
-### Multi-Paper Gap Analysis
-Drop 2 or more PDFs into `data/papers/`, then:
-```bash
+# Multi-paper gap analysis
 python src/phase3.py
-```
-```
-📚 Found 3 papers
 
-📄 Reading: paper1.pdf
-   Summarizing... ✅
-
-📄 Reading: paper2.pdf
-   Summarizing... ✅
-
-🔍 Analyzing gaps across all papers...
-
-UNSOLVED PROBLEMS
-...
-
-CONTRADICTIONS
-...
-
-RESEARCH GAPS
-...
-
-SUGGESTED DIRECTIONS
-...
-
-💾 Report saved to data/gap_report.txt
+# Full report with hypotheses
+python src/phase4.py
 ```
 
 ---
 
-## What's Next
+## What's next
 
-Planning to extend this with a web interface where you can upload
-papers directly from the browser, run gap analysis with a click,
-and read the full report without touching the terminal.
+Planning to add fine-tuning of a small open-source model on academic text
+so the system has domain-specific understanding beyond what the base LLM provides.
 
 ---
 
