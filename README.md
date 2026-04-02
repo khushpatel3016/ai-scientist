@@ -1,7 +1,8 @@
 # 🧬 AI Scientist
 
-A locally-running AI research assistant that reads papers, answers questions,
-finds research gaps, and generates ranked hypotheses — now with a full web interface.
+An end-to-end autonomous research assistant that reads papers, answers questions,
+finds gaps in existing literature, generates ranked hypotheses, writes full research
+papers, and exposes everything through a web interface.
 
 Built from scratch. No tutorials. No shortcuts.
 
@@ -12,13 +13,14 @@ Built from scratch. No tutorials. No shortcuts.
 Most AI projects wrap an API and call it a day.
 This one builds the full pipeline manually:
 
-- Extract raw text from a PDF using PyMuPDF
+- Extract raw text from PDFs using PyMuPDF
 - Split into chunks and embed each one using SentenceTransformers
 - Store embeddings in a FAISS index for fast similarity search
 - Embed your question the same way and retrieve the most relevant chunks
 - Pass those chunks as context to LLaMA 3.3 70B and get a grounded answer
-- Feed multiple papers together to find what nobody has solved yet
-- Turn those gaps into ranked, testable hypotheses
+- Feed multiple papers together to find contradictions and unsolved problems
+- Turn those gaps into specific, testable, ranked hypotheses
+- Write a complete academic research paper from those hypotheses
 
 No hallucination from thin air. The model only answers from what the papers say.
 
@@ -27,31 +29,36 @@ No hallucination from thin air. The model only answers from what the papers say.
 ## What's been built
 
 ### Phase 1 — PDF Reading and Processing
-Raw text extraction from PDFs using PyMuPDF.
+Raw text extraction from research PDFs using PyMuPDF.
 Text is cleaned and split into chunks so context isn't lost at boundaries.
 
 ### Phase 2 — Semantic Q&A
 Each chunk is converted into a 384-dimension vector using SentenceTransformers
-(all-MiniLM-L6-v2). Vectors go into a FAISS index. When a question comes in,
+(all-MiniLM-L6-v2). Vectors go into a FAISS index. When a question comes in
 it gets embedded the same way and cosine similarity finds the top matching chunks.
 Those chunks become the context window for LLaMA 3.3 70B on Groq.
 
 ### Phase 3 — Research Gap Finder
 Accepts multiple PDFs on the same topic. Summarizes each paper independently,
-then passes all summaries together to the LLM with a structured prompt that finds
-unsolved problems, contradictions between papers, missing experiments, and
-concrete directions for new research. Full report saved automatically.
+then passes all summaries to the LLM with a structured prompt that surfaces
+unsolved problems, contradictions between papers, missing experiments,
+and concrete directions for new research. Full report saved automatically.
 
 ### Phase 4 — Hypothesis Lab
-Takes the gap report and generates 5 specific, testable hypotheses with reasoning,
-proposed experiments, and expected outcomes. Each hypothesis is then scored and
-ranked by novelty, feasibility, and impact.
+Takes the gap report and generates 5 specific, testable hypotheses — each with
+reasoning, a proposed experiment, and expected outcomes. Every hypothesis is
+then scored and ranked by novelty, feasibility, and impact.
 
-### Phase 5 — AI Paper Writer + Web Interface
+### Phase 5 — AI Paper Writer
+Takes a research idea, gap, and hypothesis as input and generates a complete
+academic research paper with title, abstract, introduction, related work,
+methodology, results, and conclusion. Accepts input manually or automatically
+from Phase 4 output. Paper saved as a text file.
+
+### Web Interface
 Full Streamlit web app wrapping all five phases. Upload PDFs from the browser,
-ask questions, run gap analysis, generate hypotheses, generate polished research
-papers from the gap-and-hypothesis output, and download reports — no terminal
-needed.
+ask questions, run gap analysis, generate hypotheses, write papers, and download
+everything — no terminal needed.
 
 ---
 
@@ -64,8 +71,25 @@ PDF Input
                 └─► FAISS Vector Index
                      └─► Similarity Search on query
                           └─► Context → LLaMA 3.3 70B (Groq)
-                               └─► Answer / Gap Report / Hypotheses / Paper Writer
+                               └─► Answer / Gap Report / Hypotheses / Paper
 ```
+
+---
+
+## Web Interface
+
+Five pages, one sidebar:
+
+| Page | What it does |
+|---|---|
+| Home | Architecture overview, feature cards, tech stack |
+| Paper Q&A | Upload PDF, ask questions, get grounded answers |
+| Gap Finder | Upload multiple PDFs, get full gap analysis report |
+| Hypothesis Lab | Generate and rank testable hypotheses from gaps |
+| Paper Writer | Write a complete research paper from idea to conclusion |
+
+The workflow is connected end to end — Gap Finder passes its output directly
+to Hypothesis Lab, which passes its output directly to Paper Writer.
 
 ---
 
@@ -86,9 +110,11 @@ PDF Input
 ```
 ai-scientist/
 ├── data/
-│   ├── sample.pdf
-│   ├── gap_report.txt
-│   └── papers/
+│   ├── sample.pdf               # Single paper for Q&A
+│   ├── gap_report.txt           # Auto-generated gap report
+│   ├── full_report_[timestamp].txt   # Phase 4 full report
+│   ├── research_paper_[timestamp].txt  # Phase 5 generated paper
+│   └── papers/                  # Multiple papers for gap analysis
 │       ├── paper1.pdf
 │       └── paper2.pdf
 ├── src/
@@ -96,12 +122,14 @@ ai-scientist/
 │   ├── embedder.py        # Vector embedding
 │   ├── retriever.py       # FAISS index and search
 │   ├── qa.py              # LLM answer generation
-│   ├── gap_finder.py      # Summarization and gap analysis
+│   ├── gap_finder.py      # Paper summarization and gap analysis
 │   ├── hypothesis.py      # Hypothesis generation and ranking
-│   ├── main.py            # Phase 2 CLI entry point
-│   ├── phase3.py          # Phase 3 CLI entry point
-│   ├── phase4.py          # Phase 4 CLI entry point
-│   └── app.py             # Phase 5 — web interface
+│   ├── paper_writer.py    # Section-by-section paper generation
+│   ├── main.py            # Phase 2 CLI
+│   ├── phase3.py          # Phase 3 CLI
+│   ├── phase4.py          # Phase 4 CLI
+│   ├── phase5.py          # Phase 5 CLI
+│   └── app.py             # Web interface
 ├── requirements.txt
 └── .gitignore
 ```
@@ -138,29 +166,40 @@ streamlit run src/app.py
 
 Opens at http://localhost:8501
 
+Enter your Groq API key in the sidebar and you're ready.
+
 ---
 
-## CLI usage (no browser)
+## CLI usage
 ```bash
-# Single paper Q&A
+# Phase 2 — single paper Q&A
 python src/main.py
 
-# Multi-paper gap analysis
+# Phase 3 — multi-paper gap analysis
 python src/phase3.py
 
-# Full report with hypotheses
+# Phase 4 — hypothesis generation and ranking
 python src/phase4.py
+
+# Phase 5 — AI paper writer
+python src/phase5.py
 ```
 
 ---
 
-## What's next
+## Full workflow example
+```
+1. Drop papers into data/papers/
+2. Run Gap Finder → get gap_report.txt
+3. Run Hypothesis Lab → get ranked hypotheses
+4. Run Paper Writer → get full research paper
+```
 
-Planning to add fine-tuning of a small open-source model on academic text
-so the system has domain-specific understanding beyond what the base LLM provides.
+Or do the entire thing in the browser with no terminal.
 
 ---
 
 ## Author
 
 Khush Patel — CSE undergrad building things that are harder than they look.
+[GitHub](https://github.com/khushpatel3016/ai-scientist)
